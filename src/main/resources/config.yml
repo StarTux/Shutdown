@@ -1,0 +1,4 @@
+ShutdownEmpty: true
+MaxUptime: 24
+MinUptime: 120
+MaxLagTime: 10

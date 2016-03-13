@@ -1,0 +1,16 @@
+name: Shutdown
+description: Automatic shutdown service for Bukkit
+author: StarTux
+version: 0.1
+main: com.winthier.shutdown.bukkit.BukkitShutdownPlugin
+depend: [ ]
+commands:
+  shutdown:
+    description: Admin interface
+    permission: shutdown.shutdown
+    usage: |-
+      Usage: /<command> SECONDS|info|cancel|now
+permissions:
+  shutdown.shutdown:
+    description: Use the /shutdown command
+    default: op
