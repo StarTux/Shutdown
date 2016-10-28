@@ -40,16 +40,8 @@ class BukkitShutdownTask {
         try {
             if (broadcastTimes.contains(seconds)) plugin.broadcastShutdown(seconds);
             if (titleTimes.contains(seconds)) plugin.titleShutdown(seconds);
-            switch (seconds) {
-            case 0:
-                plugin.sendAllPlayersToHub();
-                break;
-            case -1:
-                plugin.kickAllPlayers();
-                break;
-            case -2:
+            if (seconds == 0) {
                 plugin.shutdownNow();
-                break;
             }
         } catch (Exception e) {
             e.printStackTrace();
