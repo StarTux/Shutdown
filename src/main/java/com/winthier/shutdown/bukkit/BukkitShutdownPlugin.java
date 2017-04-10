@@ -228,6 +228,9 @@ public class BukkitShutdownPlugin extends JavaPlugin implements Listener {
     }
 
     void shutdownNow() {
+        for (Player player: getServer().getOnlinePlayers()) {
+            player.kickPlayer("Quick restart");
+        }
         getServer().shutdown();
     }
 
