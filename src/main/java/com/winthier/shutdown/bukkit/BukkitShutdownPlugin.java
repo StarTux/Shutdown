@@ -3,8 +3,6 @@ package com.winthier.shutdown.bukkit;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -14,20 +12,19 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.json.simple.JSONValue;
 
 /**
  * This is a quick and dirty implementation of the shutdown
  * plugin. A future version should be customizable and portable.
  */
-public class BukkitShutdownPlugin extends JavaPlugin implements Listener {
-    static enum ShutdownReason {
+public final class BukkitShutdownPlugin extends JavaPlugin implements Listener {
+    enum ShutdownReason {
         NONE("This is a mistake. Please check the code"),
         MANUAL("Manual shutdown"),
         LAG("Server lag"),
         UPTIME("Uptime too long"),
-        EMPTY("Server is empty"),
-        ;
+        EMPTY("Server is empty");
+
         public final String human;
         ShutdownReason(String human) {
             this.human = human;
@@ -35,17 +32,17 @@ public class BukkitShutdownPlugin extends JavaPlugin implements Listener {
     }
 
     static final long TICKS_PER_SECOND = 20L;
-    final double LAG_THRESHOLD = 17.0; // in ticks per second
+    static final double LAG_THRESHOLD = 17.0; // in ticks per second
     final TPS tps = new TPS(TICKS_PER_SECOND * 60L);
-    int maxLagTime = 5; // in minutes
-    long maxUptime = 24; // in hours
-    long minUptime = 60; // in minutes
-    long uptime = 0L; // in minutes
-    BukkitRunnable task;
-    BukkitShutdownTask shutdownTask = null;
-    int lagTime = 0;
-    boolean shutdownEmpty = true;
-    
+    private int maxLagTime = 5; // in minutes
+    private long maxUptime = 24; // in hours
+    private long minUptime = 60; // in minutes
+    private long uptime = 0L; // in minutes
+    private BukkitRunnable task;
+    private BukkitShutdownTask shutdownTask = null;
+    private int lagTime = 0;
+    private boolean shutdownEmpty = true;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
@@ -61,8 +58,7 @@ public class BukkitShutdownPlugin extends JavaPlugin implements Listener {
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
     }
 
-    void configure()
-    {
+    void configure() {
         reloadConfig();
         maxUptime = getConfig().getLong("MaxUptime", 24);
         minUptime = getConfig().getLong("MinUptime", 60);
@@ -172,7 +168,7 @@ public class BukkitShutdownPlugin extends JavaPlugin implements Listener {
         }
         uptime += 1;
     }
-    
+
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         if (uptime <= minUptime) return;
@@ -257,6 +253,7 @@ public class BukkitShutdownPlugin extends JavaPlugin implements Listener {
         }
     }
 
+    @SuppressWarnings("deprecation")
     void titleShutdown(int seconds) {
         for (Player player: getServer().getOnlinePlayers()) {
             player.sendTitle(format("&3Quick Restart"), format("&3in %s", formatSeconds(seconds)));

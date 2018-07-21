@@ -5,12 +5,12 @@ import java.util.List;
 import lombok.Getter;
 import org.bukkit.scheduler.BukkitRunnable;
 
-class BukkitShutdownTask {
+final class BukkitShutdownTask {
     private final BukkitShutdownPlugin plugin;
     private BukkitRunnable task;
     @Getter
     private int seconds;
-    private List<Integer> broadcastTimes = Arrays.asList(60*60, 60*30, 60*15, 60*10, 60*5, 60, 45, 30, 20, 10, 5);
+    private List<Integer> broadcastTimes = Arrays.asList(60 * 60, 60 * 30, 60 * 15, 60 * 10, 60 * 5, 60, 45, 30, 20, 10, 5);
     private List<Integer> titleTimes = Arrays.asList(600, 30, 5);
 
     BukkitShutdownTask(BukkitShutdownPlugin plugin, int seconds) {

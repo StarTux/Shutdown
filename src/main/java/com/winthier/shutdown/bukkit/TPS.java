@@ -3,7 +3,7 @@ package com.winthier.shutdown.bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public class TPS {
+final class TPS {
     private BukkitRunnable task;
     private long interval; // in ticks
     private long time;
@@ -26,7 +26,9 @@ public class TPS {
 
     void stop() {
         if (task == null) return;
-        try { task.cancel(); } catch (IllegalStateException ise) {}
+        try {
+            task.cancel();
+        } catch (IllegalStateException ise) { }
         task = null;
     }
 
