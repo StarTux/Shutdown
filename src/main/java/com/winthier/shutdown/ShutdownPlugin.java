@@ -83,7 +83,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 sender.sendMessage("§6§lShutdown Info");
                 sender.sendMessage(String.format("Uptime: §e%s §7/ %s", infoMinutes(uptime), maxUptime < 0 ? "~" : infoMinutes(maxUptime)));
                 sender.sendMessage(String.format("TPS: §e%.2f §6/ %.2f §8|§7 %s / %s", tps.tps(), lagThreshold, infoMinutes(lagTime), maxLagTime < 0 ? "~" : infoMinutes(maxLagTime)));
-                sender.sendMessage(String.format("Free: §e%d §6/ %d §8|§7 %s / %s", freeMem(), lowMemThreshold, infoMinutes(lowMemTime), maxLowMemTime < 0 ? "~" : infoMinutes(maxLowMemTime)));
+                sender.sendMessage(String.format("Free: §e%d §6/ %d MiB §8|§7 %s / %s", freeMem(), lowMemThreshold, infoMinutes(lowMemTime), maxLowMemTime < 0 ? "~" : infoMinutes(maxLowMemTime)));
                 sender.sendMessage(String.format("Empty: §e%s §8|§7 %s / %s", getServer().getOnlinePlayers().isEmpty() ? "yes" : "no", infoMinutes(emptyTime), maxEmptyTime < 0 ? "~" : infoMinutes(maxEmptyTime)));
                 if (!isShutdownActive()) {
                     sender.sendMessage("§aNo shutdown active");
