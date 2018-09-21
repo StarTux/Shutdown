@@ -18,4 +18,5 @@ There is one admin command which requires the `shutdown.shutdown` permission.
 - `shutdown.alert` - Receive an alwert when some shutdown conditions become true.
 - `shutdown.notify` - Receive the standard broadcasts. Defaults to *true*.
 
-
+## Links
+- [Source code](https://github.com/StarTux/Shutdown) on Github
