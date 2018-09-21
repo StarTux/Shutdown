@@ -1,18 +1,30 @@
 name: Shutdown
-description: Automatic shutdown service for Bukkit
+description: Automated shutdown service
 author: StarTux
 version: 0.1
 api-version: 1.13
 website: https://cavetale.com
-main: com.winthier.shutdown.bukkit.BukkitShutdownPlugin
+main: com.winthier.shutdown.ShutdownPlugin
 depend: [ ]
 commands:
   shutdown:
     description: Admin interface
     permission: shutdown.shutdown
     usage: |-
-      Usage: /<command> SECONDS|info|cancel|now
+      Usage: /shutdown
+      /shutdown <seconds> - Initiate shutdown.
+      /shutdown now - Shutdown with a nice interval.
+      /shutdown info - Print performance and timing information.
+      /shutdown reload - Reload the configuration file.
+      /shutdown reset - Reset all shutdown timings.
+      /shutdown cancel - Cancel the currently ongoing shutdown.
 permissions:
   shutdown.shutdown:
     description: Use the /shutdown command
     default: op
+  shutdown.alert:
+    description: Alert when a shutdown reason occurs
+    default: op
+  shutdown.notify:
+    description: Receive shutdown broadcasts and titles
+    default: true

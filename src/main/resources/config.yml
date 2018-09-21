@@ -1,4 +1,33 @@
-ShutdownEmpty: true
-MaxUptime: 24
-MinUptime: 120
-MaxLagTime: 10
+# Shutdown plugin `config.yml`
+
+# Never shutdown before X minutes of uptime.
+MinUptime: 120 # In minutes
+
+# Shutdown when the server lags for X minutes.
+MaxLagTime: 10 # In minutes.  Negative value disables.
+LagThreshold: 17.0 # TPS
+LagShutdownTime: 30 # In seconds
+
+# Shutdown when the server is low on mem for X minutes.
+MaxLowMemTime: 10 # In minutes.  Negative value disables.
+LowMemThreshold: 1024 # MiB
+LowMemShutdownTime: 30 # In seconds
+
+# Shutdown when the server is empty for X minutes.
+MaxEmptyTime: 10 # In Minutes.  Negative value disables.
+
+# Initiate shutdown after X minutes of uptime.
+MaxUptime: 1440 # In minutes.  Negative value disables.
+MaxUptimeShutdownTime: 60 # In seconds
+
+ShutdownBroadcastTimes: [3600, 1800, 900, 600, 300, 180, 120, 60, 45, 30, 20, 10, 5]
+ShutdownTitleTimes: [600, 30, 5]
+Messages:
+  Broadcast: '§aQuick restart in {time}.'
+  Title: '§aQuick restart'
+  Subtitle: '§ain {time}.'
+  Second: second
+  Seconds: seconds
+  Minute: minute
+  Minutes: minutes
+  Hour: hour
