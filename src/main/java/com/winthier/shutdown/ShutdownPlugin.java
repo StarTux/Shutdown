@@ -149,7 +149,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         uptime += 1;
         // Fast returns
         if (isShutdownActive()) return;
-        if (uptime < minUptime * 60L) return;
+        if (uptime < minUptime) return;
         // Lag time
         if (tps.tps() < lagThreshold) {
             getLogger().warning("TPS is at " + String.format("%.2f", tps.tps()));
@@ -184,7 +184,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             }
         }
         // Max uptime
-        if (maxUptime >= 0 && uptime > maxUptime * 60L) {
+        if (maxUptime >= 0 && uptime > maxUptime) {
             shutdown(uptimeShutdownTime, ShutdownReason.UPTIME);
             return;
         }
