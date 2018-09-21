@@ -152,7 +152,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         if (uptime < minUptime) return;
         // Lag time
         if (tps.tps() < lagThreshold) {
-            getLogger().warning("TPS is at " + String.format("%.2f", tps.tps()));
             getServer().broadcast("§e[Shutdown] " + "§cTPS is at " + String.format("%.2f", tps.tps()), "shutdown.alert");
             lagTime += 1;
             if (maxLagTime <= 0 && lagTime > maxLagTime) {
@@ -165,7 +164,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         // Low Mem
         long free = freeMem();
         if (free < lowMemThreshold) {
-            getLogger().warning("Free memory is at " + free + " MiB");
             getServer().broadcast("§e[Shutdown] " + "§cFree memory is at " + free + " MiB", "shutdown.alert");
             lowMemTime += 1;
             if (maxLowMemTime >= 0 && lowMemTime > maxLowMemTime) {
@@ -217,7 +215,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
 
     boolean shutdown(long seconds, ShutdownReason reason) {
         if (shutdownTask != null) return false;
-        getLogger().info(String.format("Initiating shutdown in %d seconds. Reason: %s", seconds, reason.human));
         getServer().broadcast(String.format("§eInitiating shutdown in %d seconds. Reason: %s", seconds, reason.human), "shutdown.alert");
         shutdownTask = new ShutdownTask(this, seconds);
         shutdownTask.start();
