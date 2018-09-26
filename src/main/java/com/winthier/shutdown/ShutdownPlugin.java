@@ -63,7 +63,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         maxEmptyTime = getConfig().getLong("MaxEmptyTime");
         maxUptime = getConfig().getLong("MaxUptime");
         minUptime = getConfig().getLong("MinUptime");
-        uptimeShutdownTime = getConfig().getLong("UptimeShutdownTime");
+        uptimeShutdownTime = getConfig().getLong("MaxUptimeShutdownTime");
         shutdownBroadcastTimes = getConfig().getLongList("ShutdownBroadcastTimes");
         shutdownTitleTimes = getConfig().getLongList("ShutdownTitleTimes");
         messages = new HashMap<>();
