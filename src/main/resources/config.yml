@@ -20,6 +20,8 @@ MaxEmptyTime: 10 # In Minutes.  Negative value disables.
 MaxUptime: 1440 # In minutes.  Negative value disables.
 MaxUptimeShutdownTime: 60 # In seconds
 
+TimingsReport: false
+
 ShutdownBroadcastTimes: [3600, 1800, 900, 600, 300, 180, 120, 60, 45, 30, 20, 10, 5]
 ShutdownTitleTimes: [600, 30, 5]
 Messages:

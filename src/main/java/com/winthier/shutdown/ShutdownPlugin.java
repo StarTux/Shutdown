@@ -19,6 +19,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     private long maxLagTime, lowMemThreshold, maxLowMemTime, maxEmptyTime, maxUptime, minUptime;
     private long lagShutdownTime, lowMemShutdownTime, uptimeShutdownTime;
     private double lagThreshold;
+    private boolean timingsReport;
     private List<Long> shutdownBroadcastTimes, shutdownTitleTimes;
     private Map<String, String> messages;
     // State
@@ -66,6 +67,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         uptimeShutdownTime = getConfig().getLong("MaxUptimeShutdownTime");
         shutdownBroadcastTimes = getConfig().getLongList("ShutdownBroadcastTimes");
         shutdownTitleTimes = getConfig().getLongList("ShutdownTitleTimes");
+        timingsReport = getConfig().getBoolean("TimingsReport");
         messages = new HashMap<>();
         ConfigurationSection section = getConfig().getConfigurationSection("Messages");
         for (String key: section.getKeys(false)) {
@@ -153,8 +155,12 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         // Lag time
         if (tps.tps() < lagThreshold) {
             getServer().broadcast("§e[Shutdown] " + "§cTPS is at " + String.format("%.2f", tps.tps()), "shutdown.alert");
+            if (lagTime == 0 && timingsReport) {
+                getLogger().info("Triggering timings report");
+                getServer().dispatchCommand(getServer().getConsoleSender(), "timings report");
+            }
             lagTime += 1;
-            if (maxLagTime <= 0 && lagTime > maxLagTime) {
+            if (maxLagTime >= 0 && lagTime > maxLagTime) {
                 shutdown(lagShutdownTime, ShutdownReason.LAG);
                 return;
             }
@@ -215,6 +221,10 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
 
     boolean shutdown(long seconds, ShutdownReason reason) {
         if (shutdownTask != null) return false;
+        if (seconds > 0 && timingsReport) {
+            getLogger().info("Triggering timings report");
+            getServer().dispatchCommand(getServer().getConsoleSender(), "timings report");
+        }
         getServer().broadcast(String.format("§eInitiating shutdown in %d seconds. Reason: %s", seconds, reason.human), "shutdown.alert");
         shutdownTask = new ShutdownTask(this, seconds);
         shutdownTask.start();
