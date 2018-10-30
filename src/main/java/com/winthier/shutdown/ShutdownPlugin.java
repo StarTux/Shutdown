@@ -122,6 +122,10 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 shutdown(30, ShutdownReason.MANUAL);
                 sender.sendMessage("§eShutdown triggered in 30 seconds");
                 return true;
+            case "dump":
+                dumpAllThreads();
+                sender.sendMessage("Threads dumped");
+                return true;
             default:
                 long seconds = 30;
                 try {
@@ -158,6 +162,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             if (lagTime == 0 && timingsReport) {
                 getLogger().info("Triggering timings report");
                 getServer().dispatchCommand(getServer().getConsoleSender(), "timings report");
+                dumpAllThreads();
             }
             lagTime += 1;
             if (maxLagTime >= 0 && lagTime > maxLagTime) {
@@ -283,5 +288,19 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         long days = hours / 24L;
         if (days > 0) return String.format("%dD.%02d:%02d", days, hours % 24, minutes % 60L);
         return String.format("%02d:%02d", hours, minutes % 60L);
+    }
+
+    void dumpAllThreads() {
+        getLogger().info("Dumping all threads.");
+        Map<Thread, StackTraceElement[]> map = Thread.getAllStackTraces();
+        getLogger().info(map.size() + " threads.");
+        for (Map.Entry<Thread, StackTraceElement[]> entry: map.entrySet()) {
+            Thread thread = entry.getKey();
+            StackTraceElement[] trace = entry.getValue();
+            getLogger().info("Thread " + thread.getId() + " name=" + thread.getName() + " prio=" + thread.getPriority());
+            for (int i = 0; i < trace.length; i += 1) {
+                getLogger().info(i + ") " + trace[i]);
+            }
+        }
     }
 }
