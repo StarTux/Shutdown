@@ -229,6 +229,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         if (seconds > 0 && timingsReport) {
             getLogger().info("Triggering timings report");
             getServer().dispatchCommand(getServer().getConsoleSender(), "timings report");
+            dumpAllThreads();
         }
         getServer().broadcast(String.format("§eInitiating shutdown in %d seconds. Reason: %s", seconds, reason.human), "shutdown.alert");
         shutdownTask = new ShutdownTask(this, seconds);
