@@ -18,6 +18,7 @@ commands:
       /shutdown reload - Reload the configuration file.
       /shutdown reset - Reset all shutdown timings.
       /shutdown cancel - Cancel the currently ongoing shutdown.
+      /shutdown dump - Dump thread stack traces.
 permissions:
   shutdown.shutdown:
     description: Use the /shutdown command
