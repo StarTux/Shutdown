@@ -162,8 +162,8 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             if (lagTime == 0 && timingsReport) {
                 getLogger().info("Triggering timings report");
                 getServer().dispatchCommand(getServer().getConsoleSender(), "timings report");
-                dumpAllThreads();
             }
+            if (timingsReport) dumpAllThreads();
             lagTime += 1;
             if (maxLagTime >= 0 && lagTime > maxLagTime) {
                 shutdown(lagShutdownTime, ShutdownReason.LAG);
@@ -297,7 +297,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         for (Map.Entry<Thread, StackTraceElement[]> entry: map.entrySet()) {
             Thread thread = entry.getKey();
             StackTraceElement[] trace = entry.getValue();
-            getLogger().info("Thread " + thread.getId() + " name=" + thread.getName() + " prio=" + thread.getPriority());
+            getLogger().info("Thread " + thread.getId() + " name=" + thread.getName() + " prio=" + thread.getPriority() + " state=" + thread.getState());
             for (int i = 0; i < trace.length; i += 1) {
                 getLogger().info(i + ") " + trace[i]);
             }
