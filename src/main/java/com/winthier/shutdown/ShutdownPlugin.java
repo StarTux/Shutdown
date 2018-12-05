@@ -299,9 +299,9 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
         for (Map.Entry<Thread, StackTraceElement[]> entry: map.entrySet()) {
             Thread thread = entry.getKey();
-            long cpuTime = tmxb.getThreadCpuTime(thread.getId());
+            long cpuTime = tmxb.getThreadCpuTime(thread.getId()) / 1000000000;
             StackTraceElement[] trace = entry.getValue();
-            getLogger().info("Thread " + thread.getId() + " name=" + thread.getName() + " prio=" + thread.getPriority() + " state=" + thread.getState() + "cputime=" + cpuTime);
+            getLogger().info("Thread " + thread.getId() + " name=" + thread.getName() + " prio=" + thread.getPriority() + " state=" + thread.getState() + " cputime=" + cpuTime + "s");
             for (int i = 0; i < trace.length; i += 1) {
                 getLogger().info(i + ") " + trace[i]);
             }
