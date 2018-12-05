@@ -305,6 +305,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             for (int i = 0; i < trace.length; i += 1) {
                 getLogger().info(i + ") " + trace[i]);
             }
+            getLogger().info("");
         }
     }
 }
