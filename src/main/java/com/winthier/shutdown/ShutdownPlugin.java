@@ -1,5 +1,7 @@
 package com.winthier.shutdown;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -294,10 +296,12 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         getLogger().info("Dumping all threads.");
         Map<Thread, StackTraceElement[]> map = Thread.getAllStackTraces();
         getLogger().info(map.size() + " threads.");
+        ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
         for (Map.Entry<Thread, StackTraceElement[]> entry: map.entrySet()) {
             Thread thread = entry.getKey();
+            long cpuTime = tmxb.getThreadCpuTime(thread.getId());
             StackTraceElement[] trace = entry.getValue();
-            getLogger().info("Thread " + thread.getId() + " name=" + thread.getName() + " prio=" + thread.getPriority() + " state=" + thread.getState());
+            getLogger().info("Thread " + thread.getId() + " name=" + thread.getName() + " prio=" + thread.getPriority() + " state=" + thread.getState() + "cputime=" + cpuTime);
             for (int i = 0; i < trace.length; i += 1) {
                 getLogger().info(i + ") " + trace[i]);
             }
