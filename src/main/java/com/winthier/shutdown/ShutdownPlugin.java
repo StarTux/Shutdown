@@ -240,6 +240,10 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     }
 
     void shutdownNow() {
+        String msg = getMessage("Kick");
+        for (Player player : getServer().getOnlinePlayers()) {
+            player.kickPlayer(msg);
+        }
         getServer().shutdown();
     }
 
@@ -257,8 +261,14 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         }
     }
 
+    String getMessage(String key) {
+        String result = messages.get(key);
+        return result != null ? result : "";
+    }
+
     String getMessage(String key, long seconds) {
         String result = messages.get(key);
+        if (result == null) return "";
         result = result.replace("{time}", formatSeconds(seconds));
         return result;
     }

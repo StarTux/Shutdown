@@ -25,6 +25,7 @@ TimingsReport: false
 ShutdownBroadcastTimes: [3600, 1800, 900, 600, 300, 180, 120, 60, 45, 30, 20, 10, 5]
 ShutdownTitleTimes: [600, 30, 5]
 Messages:
+  Kick: 'Quick restart'
   Broadcast: '§aQuick restart in {time}.'
   Title: '§aQuick restart'
   Subtitle: '§ain {time}.'
