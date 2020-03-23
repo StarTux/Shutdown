@@ -165,7 +165,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 getLogger().info("Triggering timings report");
                 getServer().dispatchCommand(getServer().getConsoleSender(), "timings report");
             }
-            if (timingsReport) dumpAllThreads();
             lagTime += 1;
             if (maxLagTime >= 0 && lagTime > maxLagTime) {
                 shutdown(lagShutdownTime, ShutdownReason.LAG);
