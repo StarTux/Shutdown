@@ -18,15 +18,26 @@ import org.bukkit.plugin.java.JavaPlugin;
 @Getter
 public final class ShutdownPlugin extends JavaPlugin implements Listener {
     // Configuration
-    private long maxLagTime, lowMemThreshold, maxLowMemTime, maxEmptyTime, maxUptime, minUptime;
-    private long lagShutdownTime, lowMemShutdownTime, uptimeShutdownTime;
+    private long maxLagTime;
+    private long lowMemThreshold;
+    private long maxLowMemTime;
+    private long maxEmptyTime;
+    private long maxUptime;
+    private long minUptime;
+    private long lagShutdownTime;
+    private long lowMemShutdownTime;
+    private long uptimeShutdownTime;
     private double lagThreshold;
     private boolean timingsReport;
-    private List<Long> shutdownBroadcastTimes, shutdownTitleTimes;
+    private List<Long> shutdownBroadcastTimes;
+    private List<Long> shutdownTitleTimes;
     private Map<String, String> messages;
     // State
     private TPS tps;
-    private long uptime, lagTime, lowMemTime, emptyTime;
+    private long uptime;
+    private long lagTime;
+    private long lowMemTime;
+    private long emptyTime;
     private ShutdownTask shutdownTask = null;
 
     enum ShutdownReason {
@@ -37,7 +48,8 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         EMPTY("Server is empty");
 
         public final String human;
-        ShutdownReason(String human) {
+
+        ShutdownReason(final String human) {
             this.human = human;
         }
     }
@@ -86,9 +98,13 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             case "info":
                 sender.sendMessage("§6§lShutdown Info");
                 sender.sendMessage(String.format("Uptime: §e%s §7/ %s", infoMinutes(uptime), maxUptime < 0 ? "~" : infoMinutes(maxUptime)));
-                sender.sendMessage(String.format("TPS: §e%.2f §6/ %.2f §8|§7 %s / %s", tps.tps(), lagThreshold, infoMinutes(lagTime), maxLagTime < 0 ? "~" : infoMinutes(maxLagTime)));
-                sender.sendMessage(String.format("Free: §e%d §6/ %d MiB §8|§7 %s / %s", freeMem(), lowMemThreshold, infoMinutes(lowMemTime), maxLowMemTime < 0 ? "~" : infoMinutes(maxLowMemTime)));
-                sender.sendMessage(String.format("Empty: §e%s §8|§7 %s / %s", getServer().getOnlinePlayers().isEmpty() ? "yes" : "no", infoMinutes(emptyTime), maxEmptyTime < 0 ? "~" : infoMinutes(maxEmptyTime)));
+                sender.sendMessage(String.format("TPS: §e%.2f §6/ %.2f §8|§7 %s / %s",
+                                                 tps.tps(), lagThreshold, infoMinutes(lagTime), maxLagTime < 0 ? "~" : infoMinutes(maxLagTime)));
+                sender.sendMessage(String.format("Free: §e%d §6/ %d MiB §8|§7 %s / %s",
+                                                 freeMem(), lowMemThreshold, infoMinutes(lowMemTime), maxLowMemTime < 0 ? "~" : infoMinutes(maxLowMemTime)));
+                sender.sendMessage(String.format("Empty: §e%s §8|§7 %s / %s",
+                                                 getServer().getOnlinePlayers().isEmpty() ? "yes" : "no",
+                                                 infoMinutes(emptyTime), maxEmptyTime < 0 ? "~" : infoMinutes(maxEmptyTime)));
                 if (!isShutdownActive()) {
                     sender.sendMessage("§aNo shutdown active");
                 } else {
@@ -311,7 +327,11 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             Thread thread = entry.getKey();
             long cpuTime = tmxb.getThreadCpuTime(thread.getId()) / 1000000000;
             StackTraceElement[] trace = entry.getValue();
-            getLogger().info("Thread " + thread.getId() + " name=" + thread.getName() + " prio=" + thread.getPriority() + " state=" + thread.getState() + " cputime=" + cpuTime + "s");
+            getLogger().info("Thread " + thread.getId()
+                             + " name=" + thread.getName()
+                             + " prio=" + thread.getPriority()
+                             + " state=" + thread.getState()
+                             + " cputime=" + cpuTime + "s");
             for (int i = 0; i < trace.length; i += 1) {
                 getLogger().info(i + ") " + trace[i]);
             }

@@ -5,7 +5,7 @@ final class TPS implements Runnable {
     private long time;
     private double tps = 20;
 
-    TPS(long interval) {
+    TPS(final long interval) {
         this.interval = interval;
         this.time = System.nanoTime();
     }
@@ -14,7 +14,7 @@ final class TPS implements Runnable {
     public void run() {
         long now = System.nanoTime();
         long nanos = now - time;
-        tps = ((double)interval * 1000000000) / (double)nanos;
+        tps = ((double) interval * 1000000000) / (double) nanos;
         time = now;
     }
 

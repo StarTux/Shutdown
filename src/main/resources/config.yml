@@ -34,3 +34,4 @@ Messages:
   Minute: minute
   Minutes: minutes
   Hour: hour
+  BossBar: '§aQuick restart in {time}'
