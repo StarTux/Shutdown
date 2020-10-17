@@ -67,6 +67,14 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         getServer().getScheduler().runTaskTimer(this, () -> minutePassed(), minute, minute);
     }
 
+    @Override
+    public void onDisable() {
+        if (shutdownTask != null) {
+            shutdownTask.stop();
+            shutdownTask = null;
+        }
+    }
+
     void configure() {
         reloadConfig();
         maxLagTime = getConfig().getLong("MaxLagTime");
