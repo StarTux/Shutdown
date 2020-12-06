@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -65,6 +66,9 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         tps = new TPS(minute);
         getServer().getScheduler().runTaskTimer(this, tps, minute, minute);
         getServer().getScheduler().runTaskTimer(this, () -> minutePassed(), minute, minute);
+        if (Bukkit.getPluginManager().isPluginEnabled("Sidebar")) {
+            new SidebarListener(this).enable();
+        }
     }
 
     @Override
