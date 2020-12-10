@@ -14,12 +14,14 @@ final class ShutdownTask {
     private long totalSeconds;
     @Getter private long seconds;
     private BossBar bossBar;
+    private long started;
 
     ShutdownTask(final ShutdownPlugin plugin, final long seconds) {
         if (seconds < 0) throw new IllegalArgumentException("seconds < 0");
         this.plugin = plugin;
         this.seconds = seconds;
         this.totalSeconds = seconds;
+        this.started = System.currentTimeMillis();
     }
 
     void start() {
@@ -28,8 +30,8 @@ final class ShutdownTask {
                 tick();
             }
         };
-        task.runTaskTimer(plugin, 20L, 20L);
-        bossBar = Bukkit.getServer().createBossBar(plugin.getMessage("BossBar", seconds), BarColor.BLUE, BarStyle.SEGMENTED_20);
+        task.runTaskTimer(plugin, 1L, 1L);
+        bossBar = Bukkit.getServer().createBossBar(plugin.getMessage(MessageType.BOSS_BAR, seconds), BarColor.BLUE, BarStyle.SEGMENTED_20);
         bossBar.setProgress(1.0);
         for (Player player : Bukkit.getOnlinePlayers()) {
             bossBar.addPlayer(player);
@@ -51,6 +53,9 @@ final class ShutdownTask {
     }
 
     private void tick() {
+        long newSeconds = totalSeconds - ((System.currentTimeMillis() - started) / 1000L);
+        if (newSeconds == seconds) return;
+        seconds = newSeconds;
         try {
             if (plugin.getShutdownBroadcastTimes().contains(seconds)) {
                 plugin.broadcastShutdown(seconds);
@@ -65,9 +70,8 @@ final class ShutdownTask {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        seconds -= 1;
         if (bossBar != null) {
-            bossBar.setTitle(plugin.getMessage("BossBar", seconds));
+            bossBar.setTitle(plugin.getMessage(MessageType.BOSS_BAR, seconds));
             bossBar.setProgress((double) seconds / (double) totalSeconds);
             for (Player player : Bukkit.getOnlinePlayers()) {
                 bossBar.addPlayer(player);

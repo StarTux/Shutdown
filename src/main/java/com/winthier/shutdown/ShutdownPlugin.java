@@ -2,17 +2,17 @@ package com.winthier.shutdown;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -32,14 +32,16 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     private boolean timingsReport;
     private List<Long> shutdownBroadcastTimes;
     private List<Long> shutdownTitleTimes;
-    private Map<String, String> messages;
+    private Map<MessageType, String> messages;
     // State
-    private TPS tps;
     private long uptime;
     private long lagTime;
     private long lowMemTime;
     private long emptyTime;
     private ShutdownTask shutdownTask = null;
+    private volatile boolean shuttingDown = false;
+    private long lastTime;
+    private double tps = 20.0;
 
     enum ShutdownReason {
         MANUAL("Manual shutdown"),
@@ -62,10 +64,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         saveDefaultConfig();
         configure();
         getServer().getPluginManager().registerEvents(this, this);
-        long minute = 20 * 60;
-        tps = new TPS(minute);
-        getServer().getScheduler().runTaskTimer(this, tps, minute, minute);
-        getServer().getScheduler().runTaskTimer(this, () -> minutePassed(), minute, minute);
+        getServer().getScheduler().runTaskTimer(this, this::tick, 1L, 1L);
         if (Bukkit.getPluginManager().isPluginEnabled("Sidebar")) {
             new SidebarListener(this).enable();
         }
@@ -77,6 +76,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             shutdownTask.stop();
             shutdownTask = null;
         }
+        shuttingDown = false;
     }
 
     void configure() {
@@ -94,10 +94,9 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         shutdownBroadcastTimes = getConfig().getLongList("ShutdownBroadcastTimes");
         shutdownTitleTimes = getConfig().getLongList("ShutdownTitleTimes");
         timingsReport = getConfig().getBoolean("TimingsReport");
-        messages = new HashMap<>();
-        ConfigurationSection section = getConfig().getConfigurationSection("Messages");
-        for (String key: section.getKeys(false)) {
-            messages.put(key, section.getString(key));
+        messages = new EnumMap<>(MessageType.class);
+        for (MessageType messageType : MessageType.values()) {
+            messages.put(messageType, getConfig().getString("Messages." + messageType.key));
         }
     }
 
@@ -111,7 +110,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 sender.sendMessage("§6§lShutdown Info");
                 sender.sendMessage(String.format("Uptime: §e%s §7/ %s", infoMinutes(uptime), maxUptime < 0 ? "~" : infoMinutes(maxUptime)));
                 sender.sendMessage(String.format("TPS: §e%.2f §6/ %.2f §8|§7 %s / %s",
-                                                 tps.tps(), lagThreshold, infoMinutes(lagTime), maxLagTime < 0 ? "~" : infoMinutes(maxLagTime)));
+                                                 tps, lagThreshold, infoMinutes(lagTime), maxLagTime < 0 ? "~" : infoMinutes(maxLagTime)));
                 sender.sendMessage(String.format("Free: §e%d §6/ %d MiB §8|§7 %s / %s",
                                                  freeMem(), lowMemThreshold, infoMinutes(lowMemTime), maxLowMemTime < 0 ? "~" : infoMinutes(maxLowMemTime)));
                 sender.sendMessage(String.format("Empty: §e%s §8|§7 %s / %s",
@@ -178,17 +177,25 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
 
     // --- Tick timer
 
+    private void tick() {
+        long now = System.currentTimeMillis();
+        if (now - lastTime < 60L * 1000L) return;
+        lastTime = now;
+        minutePassed();
+    }
+
     /**
-     * Called once per minute by scheduler created in onEnable().
+     * Called once per minute by tick().
      */
     private void minutePassed() {
         uptime += 1;
+        tps = Bukkit.getTPS()[0];
         // Fast returns
         if (isShutdownActive()) return;
         if (uptime < minUptime) return;
         // Lag time
-        if (tps.tps() < lagThreshold) {
-            getServer().broadcast("§e[Shutdown] " + "§cTPS is at " + String.format("%.2f", tps.tps()), "shutdown.alert");
+        if (tps < lagThreshold) {
+            getServer().broadcast("§e[Shutdown] " + "§cTPS is at " + String.format("%.2f", tps), "shutdown.alert");
             if (lagTime == 0 && timingsReport) {
                 getLogger().info("Triggering timings report");
                 getServer().dispatchCommand(getServer().getConsoleSender(), "timings report");
@@ -204,7 +211,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         // Low Mem
         long free = freeMem();
         if (free < lowMemThreshold) {
-            getServer().broadcast("§e[Shutdown] " + "§cFree memory is at " + free + " MiB", "shutdown.alert");
+            //getServer().broadcast("§e[Shutdown] " + "§cFree memory is at " + free + " MiB", "shutdown.alert");
             lowMemTime += 1;
             if (maxLowMemTime >= 0 && lowMemTime > maxLowMemTime) {
                 shutdown(lowMemShutdownTime, ShutdownReason.LOWMEM);
@@ -240,6 +247,12 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         emptyTime = 0;
     }
 
+    @EventHandler
+    void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
+        if (!shuttingDown) return;
+        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, getMessage(MessageType.LATE_LOGIN));
+    }
+
     // --- Shutdown triggers
 
     boolean isShutdownActive() {
@@ -267,34 +280,42 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     }
 
     void shutdownNow() {
-        String msg = getMessage("Kick");
+        String msg = getMessage(MessageType.KICK);
         for (Player player : getServer().getOnlinePlayers()) {
             player.kickPlayer(msg);
         }
-        getServer().shutdown();
+        if (shutdownTask != null) {
+            shutdownTask.stop();
+            shutdownTask = null;
+        }
+        shuttingDown = true;
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+                getLogger().info("Triggering Bukkit Shutdown");
+                Bukkit.shutdown();
+            }, 10L);
     }
 
     // --- Messaging
 
     void broadcastShutdown(long seconds) {
-        getServer().broadcast(getMessage("Broadcast", seconds), "shutdown.notify");
+        getServer().broadcast(getMessage(MessageType.BROADCAST, seconds), "shutdown.notify");
     }
 
     void titleShutdown(long seconds) {
         for (Player player: getServer().getOnlinePlayers()) {
             if (player.hasPermission("shutdown.notify")) {
-                player.sendTitle(getMessage("Title", seconds), getMessage("Subtitle", seconds));
+                player.sendTitle(getMessage(MessageType.TITLE, seconds), getMessage(MessageType.SUBTITLE, seconds));
             }
         }
     }
 
-    String getMessage(String key) {
-        String result = messages.get(key);
+    String getMessage(MessageType type) {
+        String result = messages.get(type);
         return result != null ? result : "";
     }
 
-    String getMessage(String key, long seconds) {
-        String result = messages.get(key);
+    String getMessage(MessageType type, long seconds) {
+        String result = messages.get(type);
         if (result == null) return "";
         result = result.replace("{time}", formatSeconds(seconds));
         return result;
@@ -306,17 +327,17 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
      */
     String formatSeconds(long seconds) {
         if (seconds == 1L) {
-            return "1 " + messages.get("Second");
+            return "1 " + getMessage(MessageType.SECOND);
         } else if (seconds < 60L) {
-            return String.format("%d %s", seconds, messages.get("Seconds"));
+            return String.format("%d %s", seconds, getMessage(MessageType.SECONDS));
         } else if (seconds == 60L) {
-            return "1 " + messages.get("Minute");
+            return "1 " + getMessage(MessageType.MINUTE);
         } else if (seconds == 3600L) {
-            return "1 " + messages.get("Hour");
+            return "1 " + getMessage(MessageType.HOUR);
         } else if (seconds % 60L == 0L) {
-            return String.format("%d %s", seconds / 60L, messages.get("Minutes"));
+            return String.format("%d %s", seconds / 60L, getMessage(MessageType.MINUTES));
         } else {
-            return String.format("%02d:%02d %s", seconds / 60L, seconds % 60L, messages.get("Minutes"));
+            return String.format("%02d:%02d %s", seconds / 60L, seconds % 60L, getMessage(MessageType.MINUTES));
         }
     }
 

@@ -35,3 +35,4 @@ Messages:
   Minutes: minutes
   Hour: hour
   BossBar: '§aQuick restart in {time}'
+  LateLogin: 'Server is restarting'
