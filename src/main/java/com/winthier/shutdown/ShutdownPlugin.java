@@ -2,9 +2,14 @@ package com.winthier.shutdown;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.EnumMap;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -25,6 +30,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     private long maxEmptyTime;
     private long maxUptime;
     private long minUptime;
+    private long scheduledShutdownTime;
     private long lagShutdownTime;
     private long lowMemShutdownTime;
     private long uptimeShutdownTime;
@@ -32,6 +38,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     private boolean timingsReport;
     private List<Long> shutdownBroadcastTimes;
     private List<Long> shutdownTitleTimes;
+    private List<TimeOfDay> scheduled;
     private Map<MessageType, String> messages;
     // State
     private long uptime;
@@ -42,20 +49,8 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     private volatile boolean shuttingDown = false;
     private long lastTime;
     private double tps = 20.0;
-
-    enum ShutdownReason {
-        MANUAL("Manual shutdown"),
-        LAG("Server lag"),
-        LOWMEM("Low memory"),
-        UPTIME("Uptime too long"),
-        EMPTY("Server is empty");
-
-        public final String human;
-
-        ShutdownReason(final String human) {
-            this.human = human;
-        }
-    }
+    private Calendar calendar;
+    private TimeOfDay lastTimeOfDay;
 
     // --- Setup routines
 
@@ -68,6 +63,8 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         if (Bukkit.getPluginManager().isPluginEnabled("Sidebar")) {
             new SidebarListener(this).enable();
         }
+        lastTime = System.currentTimeMillis();
+        calendar = new GregorianCalendar();
     }
 
     @Override
@@ -81,8 +78,17 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
 
     void configure() {
         reloadConfig();
+        scheduled = new ArrayList<>();
+        for (String it : getConfig().getStringList("Scheduled")) {
+            try {
+                scheduled.add(TimeOfDay.parse(it));
+            } catch (Exception e) {
+                getLogger().warning("config.yml: Invalid time of day: '" + it + "'");
+            }
+        }
         maxLagTime = getConfig().getLong("MaxLagTime");
         lagThreshold = getConfig().getDouble("LagThreshold");
+        scheduledShutdownTime = getConfig().getLong("ScheduledShutdownTime");
         lagShutdownTime = getConfig().getLong("LagShutdownTime");
         maxLowMemTime = getConfig().getLong("MaxLowMemTime");
         lowMemThreshold = getConfig().getLong("LowMemThreshold");
@@ -108,6 +114,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             switch (args[0]) {
             case "info":
                 sender.sendMessage("§6§lShutdown Info");
+                sender.sendMessage("Time §e" + lastTimeOfDay);
                 sender.sendMessage(String.format("Uptime: §e%s §7/ %s", infoMinutes(uptime), maxUptime < 0 ? "~" : infoMinutes(maxUptime)));
                 sender.sendMessage(String.format("TPS: §e%.2f §6/ %.2f §8|§7 %s / %s",
                                                  tps, lagThreshold, infoMinutes(lagTime), maxLagTime < 0 ? "~" : infoMinutes(maxLagTime)));
@@ -116,6 +123,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 sender.sendMessage(String.format("Empty: §e%s §8|§7 %s / %s",
                                                  getServer().getOnlinePlayers().isEmpty() ? "yes" : "no",
                                                  infoMinutes(emptyTime), maxEmptyTime < 0 ? "~" : infoMinutes(maxEmptyTime)));
+                sender.sendMessage("Scheduled: §e" + scheduled);
                 if (!isShutdownActive()) {
                     sender.sendMessage("§aNo shutdown active");
                 } else {
@@ -127,6 +135,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 lagTime = 0;
                 lowMemTime = 0;
                 emptyTime = 0;
+                lastTimeOfDay = null;
                 sender.sendMessage("§eShutdown configuration reloaded.");
                 return true;
             case "reset":
@@ -179,7 +188,19 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
 
     private void tick() {
         long now = System.currentTimeMillis();
-        if (now - lastTime < 60L * 1000L) return;
+        long interval = now - lastTime;
+        if (interval < 1000L) return;
+        if (!isShutdownActive()) {
+            calendar.setTime(new Date(now));
+            TimeOfDay timeOfDay = new TimeOfDay(calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
+            if (!Objects.equals(timeOfDay, lastTimeOfDay)) {
+                lastTimeOfDay = timeOfDay;
+                if (scheduled.contains(timeOfDay)) {
+                    shutdown(scheduledShutdownTime, ShutdownReason.SCHEDULED);
+                }
+            }
+        }
+        if (interval < 60L * 1000L) return;
         lastTime = now;
         minutePassed();
     }

@@ -1,5 +1,8 @@
 # Shutdown plugin `config.yml`
 
+Scheduled: []
+ScheduledShutdownTime: 300
+
 # Never shutdown before X minutes of uptime.
 MinUptime: 120 # In minutes
 
