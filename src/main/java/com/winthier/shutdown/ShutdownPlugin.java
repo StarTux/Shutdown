@@ -114,7 +114,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             switch (args[0]) {
             case "info":
                 sender.sendMessage("§6§lShutdown Info");
-                sender.sendMessage("Time §e" + lastTimeOfDay);
+                sender.sendMessage(String.format("Time §e%s §7/ %s", lastTimeOfDay.toString(), scheduled.toString()));
                 sender.sendMessage(String.format("Uptime: §e%s §7/ %s", infoMinutes(uptime), maxUptime < 0 ? "~" : infoMinutes(maxUptime)));
                 sender.sendMessage(String.format("TPS: §e%.2f §6/ %.2f §8|§7 %s / %s",
                                                  tps, lagThreshold, infoMinutes(lagTime), maxLagTime < 0 ? "~" : infoMinutes(maxLagTime)));
@@ -123,7 +123,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 sender.sendMessage(String.format("Empty: §e%s §8|§7 %s / %s",
                                                  getServer().getOnlinePlayers().isEmpty() ? "yes" : "no",
                                                  infoMinutes(emptyTime), maxEmptyTime < 0 ? "~" : infoMinutes(maxEmptyTime)));
-                sender.sendMessage("Scheduled: §e" + scheduled);
                 if (!isShutdownActive()) {
                     sender.sendMessage("§aNo shutdown active");
                 } else {

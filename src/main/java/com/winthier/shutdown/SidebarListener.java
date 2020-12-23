@@ -13,9 +13,11 @@ import org.bukkit.event.Listener;
 @RequiredArgsConstructor
 public final class SidebarListener implements Listener {
     private final ShutdownPlugin plugin;
+    String sidebarLine = null;
 
     public SidebarListener enable() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
+        Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 1L, 1L);
         return this;
     }
 
@@ -31,12 +33,18 @@ public final class SidebarListener implements Listener {
         return color + String.format("%.1f", tps);
     }
 
+    void tick() {
+        double[] tps = Bukkit.getTPS();
+        sidebarLine = ""
+            + ChatColor.GOLD + Bukkit.getOnlinePlayers().size() + ChatColor.GRAY + "p"
+            + " " + ChatColor.GOLD + formatTPS(tps[0]) + ChatColor.GRAY + "tps";
+    }
+
     @EventHandler
     void onPlayerSidebar(PlayerSidebarEvent event) {
+        if (sidebarLine == null) return;
         Player player = event.getPlayer();
         if (!player.hasPermission("shutdown.alert")) return;
-        double[] tps = Bukkit.getTPS();
-        String msg = ChatColor.GOLD + "TPS " + formatTPS(tps[0]) + " " + formatTPS(tps[1]) + " " + formatTPS(tps[2]);
-        event.addLines(plugin, Priority.HIGHEST, Arrays.asList(msg));
+        event.addLines(plugin, Priority.HIGHEST, Arrays.asList(sidebarLine));
     }
 }
