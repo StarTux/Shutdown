@@ -216,10 +216,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         // Lag time
         if (tps < lagThreshold) {
             getServer().broadcast("§e[Shutdown] " + "§cTPS is at " + String.format("%.2f", tps), "shutdown.alert");
-            if (lagTime == 0 && timingsReport) {
-                getLogger().info("Triggering timings report");
-                getServer().dispatchCommand(getServer().getConsoleSender(), "timings report");
-            }
             lagTime += 1;
             if (maxLagTime >= 0 && lagTime > maxLagTime) {
                 shutdown(lagShutdownTime, ShutdownReason.LAG);
