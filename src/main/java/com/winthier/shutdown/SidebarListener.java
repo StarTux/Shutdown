@@ -14,6 +14,7 @@ import org.bukkit.event.Listener;
 public final class SidebarListener implements Listener {
     private final ShutdownPlugin plugin;
     String sidebarLine = null;
+    double tps = 20.0;
 
     public SidebarListener enable() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
@@ -34,15 +35,15 @@ public final class SidebarListener implements Listener {
     }
 
     void tick() {
-        double[] tps = Bukkit.getTPS();
+        tps = Bukkit.getTPS()[0];
         sidebarLine = ""
             + ChatColor.GOLD + Bukkit.getOnlinePlayers().size() + ChatColor.GRAY + "p"
-            + " " + ChatColor.GOLD + formatTPS(tps[0]) + ChatColor.GRAY + "tps";
+            + " " + ChatColor.GOLD + formatTPS(tps) + ChatColor.GRAY + "tps";
     }
 
     @EventHandler
     void onPlayerSidebar(PlayerSidebarEvent event) {
-        if (sidebarLine == null) return;
+        if (sidebarLine == null || tps > 19) return;
         Player player = event.getPlayer();
         if (!player.hasPermission("shutdown.alert")) return;
         event.addLines(plugin, Priority.HIGHEST, Arrays.asList(sidebarLine));
