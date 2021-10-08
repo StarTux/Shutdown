@@ -1,10 +1,8 @@
 package com.winthier.shutdown;
 
 import lombok.Getter;
+import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Bukkit;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
-import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -31,10 +29,9 @@ final class ShutdownTask {
             }
         };
         task.runTaskTimer(plugin, 1L, 1L);
-        bossBar = Bukkit.getServer().createBossBar(plugin.getMessage(MessageType.BOSS_BAR, seconds), BarColor.BLUE, BarStyle.SEGMENTED_20);
-        bossBar.setProgress(1.0);
+        bossBar = BossBar.bossBar(plugin.getMessage(MessageType.BOSS_BAR, seconds), 1.0f, BossBar.Color.BLUE, BossBar.Overlay.NOTCHED_20);
         for (Player player : Bukkit.getOnlinePlayers()) {
-            bossBar.addPlayer(player);
+            player.showBossBar(bossBar);
         }
     }
 
@@ -47,7 +44,9 @@ final class ShutdownTask {
         }
         task = null;
         if (bossBar != null) {
-            bossBar.removeAll();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                player.hideBossBar(bossBar);
+            }
             bossBar = null;
         }
     }
@@ -71,10 +70,10 @@ final class ShutdownTask {
             e.printStackTrace();
         }
         if (bossBar != null) {
-            bossBar.setTitle(plugin.getMessage(MessageType.BOSS_BAR, seconds));
-            bossBar.setProgress((double) seconds / (double) totalSeconds);
+            bossBar.name(plugin.getMessage(MessageType.BOSS_BAR, seconds));
+            bossBar.progress(Math.min(1.0f, Math.max(0.0f, (float) seconds / (float) totalSeconds)));
             for (Player player : Bukkit.getOnlinePlayers()) {
-                bossBar.addPlayer(player);
+                player.showBossBar(bossBar);
             }
         }
     }

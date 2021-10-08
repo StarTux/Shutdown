@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.Getter;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -215,7 +218,8 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         if (uptime < minUptime) return;
         // Lag time
         if (tps < lagThreshold) {
-            getServer().broadcast("§e[Shutdown] " + "§cTPS is at " + String.format("%.2f", tps), "shutdown.alert");
+            getServer().broadcast(Component.text("[Shutdown] TPS is at " + String.format("%.2f", tps),
+                                                 NamedTextColor.RED), "shutdown.alert");
             lagTime += 1;
             if (maxLagTime >= 0 && lagTime > maxLagTime) {
                 shutdown(lagShutdownTime, ShutdownReason.LAG);
@@ -288,7 +292,8 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             getLogger().info("Triggering timings report");
             getServer().dispatchCommand(getServer().getConsoleSender(), "timings report");
         }
-        getServer().broadcast(String.format("§eInitiating shutdown in %d seconds. Reason: %s", seconds, reason.human), "shutdown.alert");
+        getServer().broadcast(Component.text(String.format("Initiating shutdown in %d seconds. Reason: %s", seconds, reason.human),
+                                             NamedTextColor.YELLOW), "shutdown.alert");
         getLogger().info(String.format("Initiating shutdown in %d seconds. Reason: %s", seconds, reason.human));
         shutdownTask = new ShutdownTask(this, seconds);
         shutdownTask.start();
@@ -296,9 +301,9 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     }
 
     void shutdownNow() {
-        String msg = getMessage(MessageType.KICK);
+        Component msg = getMessage(MessageType.KICK);
         for (Player player : getServer().getOnlinePlayers()) {
-            player.kickPlayer(msg);
+            player.kick(msg);
         }
         if (shutdownTask != null) {
             shutdownTask.stop();
@@ -318,23 +323,25 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     }
 
     void titleShutdown(long seconds) {
+        Title title = Title.title(getMessage(MessageType.TITLE, seconds),
+                                   getMessage(MessageType.SUBTITLE, seconds));
         for (Player player: getServer().getOnlinePlayers()) {
             if (player.hasPermission("shutdown.notify")) {
-                player.sendTitle(getMessage(MessageType.TITLE, seconds), getMessage(MessageType.SUBTITLE, seconds));
+                player.showTitle(title);
             }
         }
     }
 
-    String getMessage(MessageType type) {
+    protected Component getMessage(MessageType type) {
         String result = messages.get(type);
-        return result != null ? result : "";
+        return result != null ? Component.text(result) : Component.empty();
     }
 
-    String getMessage(MessageType type, long seconds) {
+    protected Component getMessage(MessageType type, long seconds) {
         String result = messages.get(type);
-        if (result == null) return "";
+        if (result == null) return Component.empty();
         result = result.replace("{time}", formatSeconds(seconds));
-        return result;
+        return Component.text(result);
     }
 
     /**

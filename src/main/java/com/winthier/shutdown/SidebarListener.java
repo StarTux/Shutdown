@@ -2,18 +2,17 @@ package com.winthier.shutdown;
 
 import com.cavetale.sidebar.PlayerSidebarEvent;
 import com.cavetale.sidebar.Priority;
-import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 @RequiredArgsConstructor
 public final class SidebarListener implements Listener {
     private final ShutdownPlugin plugin;
-    String sidebarLine = null;
+    Component sidebarLine = Component.empty();
     double tps = 20.0;
 
     public SidebarListener enable() {
@@ -22,30 +21,32 @@ public final class SidebarListener implements Listener {
         return this;
     }
 
-    String formatTPS(double tps) {
-        ChatColor color;
+    private Component formatTPS() {
+        NamedTextColor color;
         if (tps < 16) {
-            color = ChatColor.RED;
+            color = NamedTextColor.RED;
         } else if (tps < 18) {
-            color = ChatColor.YELLOW;
+            color = NamedTextColor.YELLOW;
         } else {
-            color = ChatColor.GREEN;
+            color = NamedTextColor.GREEN;
         }
-        return color + String.format("%.1f", tps);
+        return Component.text(String.format("%.1f", tps), color);
     }
 
-    void tick() {
+    private void tick() {
         tps = Bukkit.getTPS()[0];
-        sidebarLine = ""
-            + ChatColor.GOLD + Bukkit.getOnlinePlayers().size() + ChatColor.GRAY + "p"
-            + " " + ChatColor.GOLD + formatTPS(tps) + ChatColor.GRAY + "tps";
+        sidebarLine = Component.text().color(NamedTextColor.GOLD)
+            .append(Component.text(Bukkit.getOnlinePlayers().size()))
+            .append(Component.text("p", NamedTextColor.GRAY))
+            .append(formatTPS())
+            .append(Component.text("tps", NamedTextColor.GRAY))
+            .build();
     }
 
     @EventHandler
-    void onPlayerSidebar(PlayerSidebarEvent event) {
-        if (sidebarLine == null || tps > 19) return;
-        Player player = event.getPlayer();
-        if (!player.hasPermission("shutdown.alert")) return;
-        event.addLines(plugin, Priority.HIGHEST, Arrays.asList(sidebarLine));
+    private void onPlayerSidebar(PlayerSidebarEvent event) {
+        if (tps > 19) return;
+        if (!event.getPlayer().hasPermission("shutdown.alert")) return;
+        event.add(plugin, Priority.HIGHEST, sidebarLine);
     }
 }
