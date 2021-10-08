@@ -29,7 +29,8 @@ final class ShutdownTask {
             }
         };
         task.runTaskTimer(plugin, 1L, 1L);
-        bossBar = BossBar.bossBar(plugin.getMessage(MessageType.BOSS_BAR, seconds), 1.0f, BossBar.Color.BLUE, BossBar.Overlay.NOTCHED_20);
+        bossBar = BossBar.bossBar(plugin.getMessage(MessageType.BOSS_BAR, seconds), 1.0f,
+                                  BossBar.Color.GREEN, BossBar.Overlay.NOTCHED_20);
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.showBossBar(bossBar);
         }

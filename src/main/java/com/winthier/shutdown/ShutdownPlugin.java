@@ -324,7 +324,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
 
     void titleShutdown(long seconds) {
         Title title = Title.title(getMessage(MessageType.TITLE, seconds),
-                                   getMessage(MessageType.SUBTITLE, seconds));
+                                  getMessage(MessageType.SUBTITLE, seconds));
         for (Player player: getServer().getOnlinePlayers()) {
             if (player.hasPermission("shutdown.notify")) {
                 player.showTitle(title);
@@ -350,17 +350,17 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
      */
     String formatSeconds(long seconds) {
         if (seconds == 1L) {
-            return "1 " + getMessage(MessageType.SECOND);
+            return "1 second";
         } else if (seconds < 60L) {
-            return String.format("%d %s", seconds, getMessage(MessageType.SECONDS));
+            return String.format("%d seconds", seconds);
         } else if (seconds == 60L) {
-            return "1 " + getMessage(MessageType.MINUTE);
+            return "1 minute";
         } else if (seconds == 3600L) {
-            return "1 " + getMessage(MessageType.HOUR);
+            return "1 hour";
         } else if (seconds % 60L == 0L) {
-            return String.format("%d %s", seconds / 60L, getMessage(MessageType.MINUTES));
+            return String.format("%d minutes", seconds / 60L);
         } else {
-            return String.format("%02d:%02d %s", seconds / 60L, seconds % 60L, getMessage(MessageType.MINUTES));
+            return String.format("%02d:%02d minutes", seconds / 60L, seconds % 60L);
         }
     }
 

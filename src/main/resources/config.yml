@@ -32,10 +32,5 @@ Messages:
   Broadcast: '§aQuick restart in {time}.'
   Title: '§aQuick restart'
   Subtitle: '§ain {time}.'
-  Second: second
-  Seconds: seconds
-  Minute: minute
-  Minutes: minutes
-  Hour: hour
   BossBar: '§aQuick restart in {time}'
   LateLogin: 'Server is restarting'
