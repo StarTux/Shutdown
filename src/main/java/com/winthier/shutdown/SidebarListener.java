@@ -41,7 +41,7 @@ public final class SidebarListener implements Listener {
                 Component.text("p "),
                 formatTPS(),
                 Component.text("tps"),
-            });
+            }).color(NamedTextColor.GRAY);
     }
 
     @EventHandler
