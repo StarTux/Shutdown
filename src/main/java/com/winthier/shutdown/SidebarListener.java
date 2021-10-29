@@ -4,6 +4,7 @@ import com.cavetale.sidebar.PlayerSidebarEvent;
 import com.cavetale.sidebar.Priority;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -35,12 +36,12 @@ public final class SidebarListener implements Listener {
 
     private void tick() {
         tps = Bukkit.getTPS()[0];
-        sidebarLine = Component.text().color(NamedTextColor.GOLD)
-            .append(Component.text(Bukkit.getOnlinePlayers().size()))
-            .append(Component.text("p", NamedTextColor.GRAY))
-            .append(formatTPS())
-            .append(Component.text("tps", NamedTextColor.GRAY))
-            .build();
+        sidebarLine = Component.join(JoinConfiguration.noSeparators(), new Component[] {
+                Component.text(Bukkit.getOnlinePlayers().size(), NamedTextColor.YELLOW),
+                Component.text("p "),
+                formatTPS(),
+                Component.text("tps"),
+            });
     }
 
     @EventHandler
