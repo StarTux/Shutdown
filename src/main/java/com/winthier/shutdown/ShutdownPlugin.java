@@ -15,6 +15,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -328,6 +330,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         for (Player player: getServer().getOnlinePlayers()) {
             if (player.hasPermission("shutdown.notify")) {
                 player.showTitle(title);
+                player.playSound(player.getLocation(), Sound.BLOCK_BELL_USE, SoundCategory.MASTER, 1.0f, 0.9f);
             }
         }
     }
