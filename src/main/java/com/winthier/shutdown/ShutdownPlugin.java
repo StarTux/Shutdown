@@ -315,7 +315,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         Bukkit.getScheduler().runTaskLater(this, () -> {
                 getLogger().info("Triggering Bukkit Shutdown");
                 Bukkit.shutdown();
-            }, 10L);
+            }, 100L);
     }
 
     // --- Messaging
