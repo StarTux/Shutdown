@@ -290,7 +290,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
 
     boolean shutdown(long seconds, ShutdownReason reason) {
         if (shutdownTask != null) return false;
-        if (seconds > 0 && timingsReport) {
+        if (timingsReport && uptime >= 60) {
             getLogger().info("Triggering timings report");
             getServer().dispatchCommand(getServer().getConsoleSender(), "timings report");
         }
