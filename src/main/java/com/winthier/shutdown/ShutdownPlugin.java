@@ -1,5 +1,6 @@
 package com.winthier.shutdown;
 
+import com.winthier.shutdown.event.ShutdownTriggerEvent;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
@@ -12,7 +13,6 @@ import java.util.Map;
 import java.util.Objects;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -25,6 +25,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @Getter
 public final class ShutdownPlugin extends JavaPlugin implements Listener {
@@ -81,7 +83,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         shuttingDown = false;
     }
 
-    void configure() {
+    protected void configure() {
         reloadConfig();
         scheduled = new ArrayList<>();
         for (String it : getConfig().getStringList("Scheduled")) {
@@ -161,8 +163,11 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                     sender.sendMessage("§cThere is already a shutdown active");
                     return true;
                 }
-                shutdown(30, ShutdownReason.MANUAL);
-                sender.sendMessage("§eShutdown triggered in 30 seconds");
+                if (shutdown(30, ShutdownReason.MANUAL)) {
+                    sender.sendMessage("§eShutdown triggered in 30 seconds");
+                } else {
+                    sender.sendMessage(text("Failed to trigger shutdown!", RED));
+                }
                 return true;
             case "dump":
                 dumpAllThreads();
@@ -180,8 +185,11 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                     return true;
                 }
                 if (seconds < 0) return false;
-                shutdown(seconds, ShutdownReason.MANUAL);
-                sender.sendMessage(String.format("§eShutdown triggered in %d seconds", seconds));
+                if (shutdown(seconds, ShutdownReason.MANUAL)) {
+                    sender.sendMessage(String.format("§eShutdown triggered in %d seconds", seconds));
+                } else {
+                    sender.sendMessage(text("Failed to trigger shutdown!", RED));
+                }
                 return true;
             }
         }
@@ -220,8 +228,8 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         if (uptime < minUptime) return;
         // Lag time
         if (tps < lagThreshold) {
-            getServer().broadcast(Component.text("[Shutdown] TPS is at " + String.format("%.2f", tps),
-                                                 NamedTextColor.RED), "shutdown.alert");
+            getServer().broadcast(text("[Shutdown] TPS is at " + String.format("%.2f", tps),
+                                       RED), "shutdown.alert");
             lagTime += 1;
             if (maxLagTime >= 0 && lagTime > maxLagTime) {
                 shutdown(lagShutdownTime, ShutdownReason.LAG);
@@ -257,7 +265,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         }
     }
 
-    static long freeMem() {
+    protected static long freeMem() {
         Runtime rt = Runtime.getRuntime();
         return (rt.freeMemory() - rt.totalMemory() + rt.maxMemory()) >> 20;
     }
@@ -265,44 +273,55 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     // --- Event Handler
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
+    protected void onPlayerJoin(PlayerJoinEvent event) {
         emptyTime = 0;
     }
 
     @EventHandler
-    void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
+    protected void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
         if (!shuttingDown) return;
         event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, getMessage(MessageType.LATE_LOGIN));
     }
 
     // --- Shutdown triggers
 
-    boolean isShutdownActive() {
+    protected boolean isShutdownActive() {
         return shutdownTask != null;
     }
 
-    boolean cancelShutdown() {
+    protected boolean cancelShutdown() {
         if (shutdownTask == null) return false;
         shutdownTask.stop();
         shutdownTask = null;
         return true;
     }
 
-    boolean shutdown(long seconds, ShutdownReason reason) {
-        if (shutdownTask != null) return false;
+    protected boolean shutdown(long seconds, ShutdownReason reason) {
         if (timingsReport && uptime >= 60) {
+            ShutdownTriggerEvent event = new ShutdownTriggerEvent(reason);
+            event.callEvent();
+            if (event.isCancelled()) {
+                if (reason == ShutdownReason.MANUAL) {
+                    getLogger().warning("Manual shutdown cancelled by " + event.getCancelledBy());
+                }
+                if (reason == ShutdownReason.SCHEDULED) {
+                    getLogger().warning("Scheduled shutdown cancelled by " + event.getCancelledBy());
+                }
+                return false;
+            }
+            if (shutdownTask != null) return false;
             getLogger().info("Triggering timings report");
             getServer().dispatchCommand(getServer().getConsoleSender(), "timings report");
         }
-        getServer().broadcast(Component.text(String.format("Initiating shutdown in %d seconds. Reason: %s", seconds, reason.human),
-                                             NamedTextColor.YELLOW), "shutdown.alert");
+        getServer().broadcast(text(String.format("Initiating shutdown in %d seconds. Reason: %s", seconds, reason.human),
+                                   YELLOW), "shutdown.alert");
         getLogger().info(String.format("Initiating shutdown in %d seconds. Reason: %s", seconds, reason.human));
         shutdownTask = new ShutdownTask(this, seconds);
         shutdownTask.start();
         return true;
     }
 
-    void shutdownNow() {
+    protected void shutdownNow() {
         Component msg = getMessage(MessageType.KICK);
         for (Player player : getServer().getOnlinePlayers()) {
             player.kick(msg);
@@ -320,11 +339,11 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
 
     // --- Messaging
 
-    void broadcastShutdown(long seconds) {
+    protected void broadcastShutdown(long seconds) {
         getServer().broadcast(getMessage(MessageType.BROADCAST, seconds), "shutdown.notify");
     }
 
-    void titleShutdown(long seconds) {
+    protected void titleShutdown(long seconds) {
         Title title = Title.title(getMessage(MessageType.TITLE, seconds),
                                   getMessage(MessageType.SUBTITLE, seconds));
         for (Player player: getServer().getOnlinePlayers()) {
@@ -337,21 +356,21 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
 
     protected Component getMessage(MessageType type) {
         String result = messages.get(type);
-        return result != null ? Component.text(result) : Component.empty();
+        return result != null ? text(result) : Component.empty();
     }
 
     protected Component getMessage(MessageType type, long seconds) {
         String result = messages.get(type);
         if (result == null) return Component.empty();
         result = result.replace("{time}", formatSeconds(seconds));
-        return Component.text(result);
+        return text(result);
     }
 
     /**
      * Format a number of seconds in a nice human readable way,
      * utilizing some of the messages from the config.yml.
      */
-    String formatSeconds(long seconds) {
+    protected static String formatSeconds(long seconds) {
         if (seconds == 1L) {
             return "1 second";
         } else if (seconds < 60L) {
@@ -370,14 +389,14 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     /**
      * Format a number of seconds informationally with colons.
      */
-    static String infoMinutes(long minutes) {
+    protected static String infoMinutes(long minutes) {
         long hours = minutes / 60L;
         long days = hours / 24L;
         if (days > 0) return String.format("%dD.%02d:%02d", days, hours % 24, minutes % 60L);
         return String.format("%02d:%02d", hours, minutes % 60L);
     }
 
-    void dumpAllThreads() {
+    protected void dumpAllThreads() {
         getLogger().info("Dumping all threads.");
         Map<Thread, StackTraceElement[]> map = Thread.getAllStackTraces();
         getLogger().info(map.size() + " threads.");
