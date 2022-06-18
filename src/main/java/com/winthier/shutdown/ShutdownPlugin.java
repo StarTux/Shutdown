@@ -1,5 +1,7 @@
 package com.winthier.shutdown;
 
+import com.cavetale.core.bungee.Bungee;
+import com.cavetale.core.connect.NetworkServer;
 import com.winthier.shutdown.event.ShutdownTriggerEvent;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -323,9 +325,17 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
 
     protected void shutdownNow() {
         Component msg = getMessage(MessageType.KICK);
+        NetworkServer targetServer = NetworkServer.current() != NetworkServer.HUB
+            ? NetworkServer.HUB
+            : NetworkServer.CAVETALE;
         for (Player player : getServer().getOnlinePlayers()) {
-            player.kick(msg);
+            Bungee.send(player, targetServer.registeredName);
         }
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+                for (Player player : getServer().getOnlinePlayers()) {
+                    player.kick(msg);
+                }
+            }, 10L);
         if (shutdownTask != null) {
             shutdownTask.stop();
             shutdownTask = null;

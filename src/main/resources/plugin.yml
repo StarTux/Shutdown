@@ -1,10 +1,13 @@
 main: com.winthier.shutdown.ShutdownPlugin
 name: Shutdown
+
+version: 0.1
+api-version: 1.19
+
 description: Automated shutdown service
 author: StarTux
-version: 0.1
-api-version: 1.17
 website: https://github.com/StarTux/Shutdown
+
 depend: []
 softdepend: [Sidebar]
 
