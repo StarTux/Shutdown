@@ -2,6 +2,8 @@ package com.winthier.shutdown;
 
 import com.cavetale.core.bungee.Bungee;
 import com.cavetale.core.connect.NetworkServer;
+import com.cavetale.core.event.hud.PlayerHudEvent;
+import com.cavetale.core.event.hud.PlayerHudPriority;
 import com.winthier.shutdown.event.ShutdownTriggerEvent;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -13,8 +15,11 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import lombok.Getter;
+import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -27,7 +32,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import static net.kyori.adventure.text.Component.empty;
+import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @Getter
@@ -69,9 +77,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         configure();
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getScheduler().runTaskTimer(this, this::tick, 1L, 1L);
-        if (Bukkit.getPluginManager().isPluginEnabled("Sidebar")) {
-            new SidebarListener(this).enable();
-        }
         lastTime = System.currentTimeMillis();
         calendar = new GregorianCalendar();
     }
@@ -201,6 +206,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     // --- Tick timer
 
     private void tick() {
+        tps = Bukkit.getTPS()[0];
         long now = System.currentTimeMillis();
         long interval = now - lastTime;
         if (interval < 1000L) return;
@@ -224,7 +230,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
      */
     private void minutePassed() {
         uptime += 1;
-        tps = Bukkit.getTPS()[0];
         // Fast returns
         if (isShutdownActive()) return;
         if (uptime < minUptime) return;
@@ -283,6 +288,25 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     protected void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
         if (!shuttingDown) return;
         event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, getMessage(MessageType.LATE_LOGIN));
+    }
+
+    @EventHandler
+    private void onPlayerHud(PlayerHudEvent event) {
+        if (tps <= 19 && event.getPlayer().hasPermission("shutdown.alert")) {
+            final TextColor color = tps < 16 ? RED : (tps < 18 ? YELLOW : GREEN);
+            event.sidebar(PlayerHudPriority.HIGHEST,
+                          List.of(join(noSeparators(),
+                                       text(Bukkit.getOnlinePlayers().size(), color),
+                                       text("p "),
+                                       text(String.format("%.1f", tps), color),
+                                       text("tps"))));
+        }
+        if (shutdownTask != null) {
+            event.bossbar(PlayerHudPriority.HIGHEST,
+                          getMessage(MessageType.BOSS_BAR, shutdownTask.getSeconds()),
+                          BossBar.Color.GREEN, BossBar.Overlay.NOTCHED_20, Set.of(),
+                          (float) shutdownTask.getSeconds() / (float) shutdownTask.getTotalSeconds());
+        }
     }
 
     // --- Shutdown triggers
@@ -366,12 +390,12 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
 
     protected Component getMessage(MessageType type) {
         String result = messages.get(type);
-        return result != null ? text(result) : Component.empty();
+        return result != null ? text(result) : empty();
     }
 
     protected Component getMessage(MessageType type, long seconds) {
         String result = messages.get(type);
-        if (result == null) return Component.empty();
+        if (result == null) return empty();
         result = result.replace("{time}", formatSeconds(seconds));
         return text(result);
     }

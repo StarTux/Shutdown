@@ -9,7 +9,7 @@ author: StarTux
 website: https://github.com/StarTux/Shutdown
 
 depend: [Core]
-softdepend: [Sidebar]
+softdepend: []
 
 commands:
   shutdown:
