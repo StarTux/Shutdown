@@ -351,9 +351,11 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         Component msg = getMessage(MessageType.KICK);
         NetworkServer targetServer = NetworkServer.current() != NetworkServer.HUB
             ? NetworkServer.HUB
-            : NetworkServer.CAVETALE;
-        for (Player player : getServer().getOnlinePlayers()) {
-            Bungee.send(player, targetServer.registeredName);
+            : null;
+        if (targetServer != null) {
+            for (Player player : getServer().getOnlinePlayers()) {
+                Bungee.send(player, targetServer.registeredName);
+            }
         }
         Bukkit.getScheduler().runTaskLater(this, () -> {
                 for (Player player : getServer().getOnlinePlayers()) {
