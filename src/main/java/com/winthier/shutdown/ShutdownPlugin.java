@@ -4,6 +4,7 @@ import com.cavetale.core.bungee.Bungee;
 import com.cavetale.core.connect.NetworkServer;
 import com.cavetale.core.event.hud.PlayerHudEvent;
 import com.cavetale.core.event.hud.PlayerHudPriority;
+import com.winthier.connect.Redis;
 import com.winthier.shutdown.event.ShutdownTriggerEvent;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -351,9 +352,10 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         Component msg = getMessage(MessageType.KICK);
         NetworkServer targetServer = NetworkServer.current() != NetworkServer.HUB
             ? NetworkServer.HUB
-            : null;
+            : NetworkServer.MINE;
         if (targetServer != null) {
             for (Player player : getServer().getOnlinePlayers()) {
+                Redis.set("cavetale.server_choice." + player.getUniqueId(), NetworkServer.current().registeredName, 300L);
                 Bungee.send(player, targetServer.registeredName);
             }
         }

@@ -45,6 +45,14 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- Connect -->
+    <dependency>
+      <groupId>com.winthier.connect</groupId>
+      <artifactId>connect-core</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- Lombok -->
     <dependency>
       <groupId>org.projectlombok</groupId>
