@@ -303,7 +303,10 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                                        text("tps"))));
         }
         if (shutdownTask != null) {
-            event.bossbar(PlayerHudPriority.HIGHEST,
+            PlayerHudPriority prio = shutdownTask.getSeconds() <= 30
+                ? PlayerHudPriority.HIGHEST
+                : PlayerHudPriority.LOWEST;
+            event.bossbar(prio,
                           getMessage(MessageType.BOSS_BAR, shutdownTask.getSeconds()),
                           BossBar.Color.GREEN, BossBar.Overlay.NOTCHED_20, Set.of(),
                           (float) shutdownTask.getSeconds() / (float) shutdownTask.getTotalSeconds());

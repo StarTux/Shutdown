@@ -7,7 +7,7 @@ final class ShutdownTask {
     private final ShutdownPlugin plugin;
     private BukkitRunnable task;
     @Getter private long totalSeconds;
-    @Getter private long seconds;
+    @Getter private long seconds; // time left
     private long started;
 
     ShutdownTask(final ShutdownPlugin plugin, final long seconds) {
