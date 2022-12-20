@@ -353,12 +353,15 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
 
     protected void shutdownNow() {
         Component msg = getMessage(MessageType.KICK);
-        NetworkServer targetServer = NetworkServer.current() != NetworkServer.HUB
+        NetworkServer currentServer = NetworkServer.current();
+        NetworkServer targetServer = currentServer != NetworkServer.HUB
             ? NetworkServer.HUB
             : NetworkServer.MINE;
         if (targetServer != null) {
             for (Player player : getServer().getOnlinePlayers()) {
-                Redis.set("cavetale.server_choice." + player.getUniqueId(), NetworkServer.current().registeredName, 300L);
+                if (currentServer.isSurvival()) {
+                    Redis.set("cavetale.server_choice." + player.getUniqueId(), NetworkServer.current().registeredName, 300L);
+                }
                 Bungee.send(player, targetServer.registeredName);
             }
         }
