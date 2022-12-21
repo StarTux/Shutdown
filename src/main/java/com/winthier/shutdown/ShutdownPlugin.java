@@ -356,7 +356,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         NetworkServer currentServer = NetworkServer.current();
         NetworkServer targetServer = currentServer != NetworkServer.HUB
             ? NetworkServer.HUB
-            : NetworkServer.MINE;
+            : NetworkServer.VOID;
         if (targetServer != null) {
             for (Player player : getServer().getOnlinePlayers()) {
                 if (currentServer.isSurvival()) {
