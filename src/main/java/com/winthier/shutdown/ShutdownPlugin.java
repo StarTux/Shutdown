@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 import lombok.Getter;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
@@ -34,9 +35,8 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import static net.kyori.adventure.text.Component.empty;
-import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.JoinConfiguration.noSeparators;
+import static net.kyori.adventure.text.Component.textOfChildren;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 @Getter
@@ -69,6 +69,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     private double tps = 20.0;
     private Calendar calendar;
     private TimeOfDay lastTimeOfDay;
+    private boolean whenEmpty;
 
     // --- Setup routines
 
@@ -181,6 +182,11 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 dumpAllThreads();
                 sender.sendMessage("Threads dumped");
                 return true;
+            case "whenempty":
+                whenEmpty = !whenEmpty;
+                sender.sendMessage(textOfChildren(text("Shutdown next time the server empties: ", YELLOW),
+                                                  (whenEmpty ? text("Yes", GREEN) : text("No", RED))));
+                return true;
             default:
                 long seconds = 30;
                 try {
@@ -202,6 +208,17 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             }
         }
         return false;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length == 1) {
+            String lower = args[0].toLowerCase();
+            return Stream.of("info", "reload", "reset", "cancel", "now", "dump", "whenempty")
+                .filter(s -> s.contains(lower))
+                .toList();
+        }
+        return List.of();
     }
 
     // --- Tick timer
@@ -264,6 +281,8 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             emptyTime += 1;
             if (maxEmptyTime >= 0 && emptyTime > maxEmptyTime) {
                 shutdown(0, ShutdownReason.EMPTY);
+            } else if (whenEmpty) {
+                shutdown(0, ShutdownReason.EMPTY);
             }
         }
         // Max uptime
@@ -296,11 +315,10 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         if (tps <= 19 && event.getPlayer().hasPermission("shutdown.alert")) {
             final TextColor color = tps < 16 ? RED : (tps < 18 ? YELLOW : GREEN);
             event.sidebar(PlayerHudPriority.HIGHEST,
-                          List.of(join(noSeparators(),
-                                       text(Bukkit.getOnlinePlayers().size(), color),
-                                       text("p "),
-                                       text(String.format("%.1f", tps), color),
-                                       text("tps"))));
+                          List.of(textOfChildren(text(Bukkit.getOnlinePlayers().size(), color),
+                                                 text("p "),
+                                                 text(String.format("%.1f", tps), color),
+                                                 text("tps"))));
         }
         if (shutdownTask != null) {
             PlayerHudPriority prio = shutdownTask.getSeconds() <= 30

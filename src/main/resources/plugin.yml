@@ -17,13 +17,14 @@ commands:
     permission: shutdown.shutdown
     usage: |-
       Usage: /shutdown
-      /shutdown <seconds> - Initiate shutdown.
-      /shutdown now - Shutdown with a nice interval.
-      /shutdown info - Print performance and timing information.
-      /shutdown reload - Reload the configuration file.
-      /shutdown reset - Reset all shutdown timings.
-      /shutdown cancel - Cancel the currently ongoing shutdown.
-      /shutdown dump - Dump thread stack traces.
+      /shutdown <seconds> - Initiate shutdown
+      /shutdown now - Shutdown with a nice interval
+      /shutdown info - Print performance and timing information
+      /shutdown reload - Reload the configuration file
+      /shutdown reset - Reset all shutdown timings
+      /shutdown cancel - Cancel the currently ongoing shutdown
+      /shutdown dump - Dump thread stack traces
+      /shutdown whenempty - Shutdown next time the server is empty
 permissions:
   shutdown.shutdown:
     description: Use the /shutdown command
