@@ -89,7 +89,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             shutdownTask.stop();
             shutdownTask = null;
         }
-        shuttingDown = false;
     }
 
     protected void configure() {
@@ -307,7 +306,8 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     @EventHandler
     protected void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
         if (!shuttingDown) return;
-        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, getMessage(MessageType.LATE_LOGIN));
+        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, text("The server is restarting"));
+        getLogger().info("Denying login due to shutdown: " + event.getPlayerProfile().getName());
     }
 
     @EventHandler
@@ -370,6 +370,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     }
 
     protected void shutdownNow() {
+        this.shuttingDown = true;
         Component msg = getMessage(MessageType.KICK);
         NetworkServer currentServer = NetworkServer.current();
         NetworkServer targetServer = currentServer != NetworkServer.HUB
@@ -392,7 +393,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             shutdownTask.stop();
             shutdownTask = null;
         }
-        shuttingDown = true;
         Bukkit.getScheduler().runTaskLater(this, () -> {
                 getLogger().info("Triggering Bukkit Shutdown");
                 Bukkit.shutdown();
