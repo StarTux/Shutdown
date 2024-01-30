@@ -30,9 +30,11 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.text;
@@ -303,11 +305,18 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         emptyTime = 0;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     protected void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
         if (!shuttingDown) return;
         event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, text("The server is restarting"));
-        getLogger().info("Denying login due to shutdown: " + event.getPlayerProfile().getName());
+        getLogger().info("Denying " + event.getEventName() + " due to shutdown: " + event.getPlayerProfile().getName());
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    protected void onPlayerLogin(PlayerLoginEvent event) {
+        if (!shuttingDown) return;
+        event.disallow(PlayerLoginEvent.Result.KICK_OTHER, text("The server is restarting"));
+        getLogger().info("Denying " + event.getEventName() + " due to shutdown: " + event.getPlayer().getName());
     }
 
     @EventHandler
@@ -370,6 +379,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     }
 
     protected void shutdownNow() {
+        getLogger().info("Shutdown is imminent");
         this.shuttingDown = true;
         Component msg = getMessage(MessageType.KICK);
         NetworkServer currentServer = NetworkServer.current();
@@ -385,6 +395,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             }
         }
         Bukkit.getScheduler().runTaskLater(this, () -> {
+                getLogger().info("Kicking all players");
                 for (Player player : getServer().getOnlinePlayers()) {
                     player.kick(msg);
                 }
