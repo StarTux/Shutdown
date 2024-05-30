@@ -6,8 +6,6 @@ import com.cavetale.core.event.hud.PlayerHudEvent;
 import com.cavetale.core.event.hud.PlayerHudPriority;
 import com.winthier.connect.Redis;
 import com.winthier.shutdown.event.ShutdownTriggerEvent;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -178,10 +176,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 } else {
                     sender.sendMessage(text("Failed to trigger shutdown!", RED));
                 }
-                return true;
-            case "dump":
-                dumpAllThreads();
-                sender.sendMessage("Threads dumped");
                 return true;
             case "whenempty":
                 whenEmpty = !whenEmpty;
@@ -467,26 +461,5 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         long days = hours / 24L;
         if (days > 0) return String.format("%dD.%02d:%02d", days, hours % 24, minutes % 60L);
         return String.format("%02d:%02d", hours, minutes % 60L);
-    }
-
-    protected void dumpAllThreads() {
-        getLogger().info("Dumping all threads.");
-        Map<Thread, StackTraceElement[]> map = Thread.getAllStackTraces();
-        getLogger().info(map.size() + " threads.");
-        ThreadMXBean tmxb = ManagementFactory.getThreadMXBean();
-        for (Map.Entry<Thread, StackTraceElement[]> entry: map.entrySet()) {
-            Thread thread = entry.getKey();
-            long cpuTime = tmxb.getThreadCpuTime(thread.getId()) / 1000000000;
-            StackTraceElement[] trace = entry.getValue();
-            getLogger().info("Thread " + thread.getId()
-                             + " name=" + thread.getName()
-                             + " prio=" + thread.getPriority()
-                             + " state=" + thread.getState()
-                             + " cputime=" + cpuTime + "s");
-            for (int i = 0; i < trace.length; i += 1) {
-                getLogger().info(i + ") " + trace[i]);
-            }
-            getLogger().info("");
-        }
     }
 }
