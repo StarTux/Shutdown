@@ -9,16 +9,13 @@ import com.winthier.shutdown.event.ShutdownTriggerEvent;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.EnumMap;
 import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.Getter;
 import net.kyori.adventure.bossbar.BossBar;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -34,10 +31,10 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.Component.textOfChildren;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
 
 @Getter
 public final class ShutdownPlugin extends JavaPlugin implements Listener {
@@ -57,7 +54,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     private List<Long> shutdownBroadcastTimes;
     private List<Long> shutdownTitleTimes;
     private List<TimeOfDay> scheduled;
-    private Map<MessageType, String> messages;
     // State
     private long uptime;
     private long lagTime;
@@ -71,8 +67,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     private TimeOfDay lastTimeOfDay;
     private boolean whenEmpty;
     private boolean never;
-
-    // --- Setup routines
 
     @Override
     public void onEnable() {
@@ -116,33 +110,41 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         shutdownBroadcastTimes = getConfig().getLongList("ShutdownBroadcastTimes");
         shutdownTitleTimes = getConfig().getLongList("ShutdownTitleTimes");
         timingsReport = getConfig().getBoolean("TimingsReport");
-        messages = new EnumMap<>(MessageType.class);
-        for (MessageType messageType : MessageType.values()) {
-            messages.put(messageType, getConfig().getString("Messages." + messageType.key));
-        }
     }
-
-    // --- Command interface
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             switch (args[0]) {
             case "info":
-                sender.sendMessage("§6§lShutdown Info");
-                sender.sendMessage(String.format("Time §e%s §7/ %s", lastTimeOfDay.toString(), scheduled.toString()));
-                sender.sendMessage(String.format("Uptime: §e%s §7/ %s", infoMinutes(uptime), maxUptime < 0 ? "~" : infoMinutes(maxUptime)));
-                sender.sendMessage(String.format("TPS: §e%.2f §6/ %.2f §8|§7 %s / %s",
-                                                 tps, lagThreshold, infoMinutes(lagTime), maxLagTime < 0 ? "~" : infoMinutes(maxLagTime)));
-                sender.sendMessage(String.format("Free: §e%d §6/ %d MiB §8|§7 %s / %s",
-                                                 freeMem(), lowMemThreshold, infoMinutes(lowMemTime), maxLowMemTime < 0 ? "~" : infoMinutes(maxLowMemTime)));
-                sender.sendMessage(String.format("Empty: §e%s §8|§7 %s / %s",
-                                                 getServer().getOnlinePlayers().isEmpty() ? "yes" : "no",
-                                                 infoMinutes(emptyTime), maxEmptyTime < 0 ? "~" : infoMinutes(maxEmptyTime)));
+                sender.sendMessage(text("Shutdown Info", GOLD, BOLD));
+                sender.sendMessage(textOfChildren(text("Time "),
+                                                  text(lastTimeOfDay.toString(), YELLOW),
+                                                  text(" / " + scheduled.toString(), GRAY)));
+                sender.sendMessage(textOfChildren(text("Uptime: "),
+                                                  text(infoMinutes(uptime), YELLOW),
+                                                  text(" / " + (maxUptime < 0 ? "~" : infoMinutes(maxUptime)), GRAY)));
+                sender.sendMessage(textOfChildren(text("TPS: "),
+                                                  text(String.format("%.2f", tps), YELLOW),
+                                                  text(String.format(" / %.2f", lagThreshold), GOLD),
+                                                  text(" | ", DARK_GRAY),
+                                                  text(infoMinutes(lagTime) + " / " + (maxLagTime < 0 ? "~" : infoMinutes(maxLagTime)), GRAY)));
+                sender.sendMessage(textOfChildren(text("Free: "),
+                                                  text(freeMem(), YELLOW),
+                                                  text(" / " + lowMemThreshold + " MiB", GOLD),
+                                                  text(" | ", DARK_GRAY),
+                                                  text(infoMinutes(lowMemTime) + " / " + (maxLowMemTime < 0 ? "~" : infoMinutes(maxLowMemTime)), GRAY)));
+                sender.sendMessage(textOfChildren(text("Empty: "),
+                                                  (getServer().getOnlinePlayers().isEmpty()
+                                                   ? text("yes", YELLOW)
+                                                   : text("no", DARK_GRAY)),
+                                                  text(" | ", DARK_GRAY),
+                                                  text(infoMinutes(emptyTime) + " / " + (maxEmptyTime < 0 ? "~" : infoMinutes(maxEmptyTime)), GRAY)));
                 if (!isShutdownActive()) {
-                    sender.sendMessage("§aNo shutdown active");
+                    sender.sendMessage(text("No shutdown active", GREEN));
                 } else {
-                    sender.sendMessage(String.format("§cShutdown active: §7%d seconds left.", shutdownTask.getSeconds()));
+                    sender.sendMessage(textOfChildren(text("Shutdown active: ", RED),
+                                                      text(shutdownTask.getSeconds() + " seconds left", GRAY)));
                 }
                 return true;
             case "reload":
@@ -151,29 +153,29 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 lowMemTime = 0;
                 emptyTime = 0;
                 lastTimeOfDay = null;
-                sender.sendMessage("§eShutdown configuration reloaded.");
+                sender.sendMessage(text("Shutdown configuration reloaded", YELLOW));
                 return true;
             case "reset":
                 lagTime = 0;
                 lowMemTime = 0;
                 emptyTime = 0;
-                sender.sendMessage("§eTimings were reset.");
+                sender.sendMessage(text("Timings were reset", YELLOW));
                 return true;
             case "cancel":
                 if (!isShutdownActive()) {
-                    sender.sendMessage("§cThere is no shutdown going on.");
+                    sender.sendMessage(text("There is no shutdown going on", RED));
                     return true;
                 }
                 cancelShutdown();
-                sender.sendMessage("§eShutdown cancelled");
+                sender.sendMessage(text("Shutdown cancelled", YELLOW));
                 return true;
             case "now":
                 if (isShutdownActive()) {
-                    sender.sendMessage("§cThere is already a shutdown active");
+                    sender.sendMessage(text("There is already a shutdown active", RED));
                     return true;
                 }
                 if (shutdown(30, ShutdownReason.MANUAL)) {
-                    sender.sendMessage("§eShutdown triggered in 30 seconds");
+                    sender.sendMessage(text("Shutdown triggered in 30 seconds", YELLOW));
                 } else {
                     sender.sendMessage(text("Failed to trigger shutdown!", RED));
                 }
@@ -196,12 +198,12 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                     return false;
                 }
                 if (isShutdownActive()) {
-                    sender.sendMessage("§cThere is already a shutdown active");
+                    sender.sendMessage(text("There is already a shutdown active", RED));
                     return true;
                 }
                 if (seconds < 0) return false;
                 if (shutdown(seconds, ShutdownReason.MANUAL)) {
-                    sender.sendMessage(String.format("§eShutdown triggered in %d seconds", seconds));
+                    sender.sendMessage(text("Shutdown triggered in " + seconds + " seconds", YELLOW));
                 } else {
                     sender.sendMessage(text("Failed to trigger shutdown!", RED));
                 }
@@ -221,8 +223,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         }
         return List.of();
     }
-
-    // --- Tick timer
 
     private void tick() {
         tps = Bukkit.getTPS()[0];
@@ -267,7 +267,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         // Low Mem
         long free = freeMem();
         if (free < lowMemThreshold) {
-            //getServer().broadcast("§e[Shutdown] " + "§cFree memory is at " + free + " MiB", "shutdown.alert");
+            getServer().broadcast(text("[Shutdown] cFree memory is at " + free + " MiB", RED), "shutdown.alert");
             lowMemTime += 1;
             if (maxLowMemTime >= 0 && lowMemTime > maxLowMemTime) {
                 shutdown(lowMemShutdownTime, ShutdownReason.LOWMEM);
@@ -297,8 +297,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         Runtime rt = Runtime.getRuntime();
         return (rt.freeMemory() - rt.totalMemory() + rt.maxMemory()) >> 20;
     }
-
-    // --- Event Handler
 
     @EventHandler
     protected void onPlayerJoin(PlayerJoinEvent event) {
@@ -334,13 +332,11 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 ? PlayerHudPriority.HIGHEST
                 : PlayerHudPriority.LOWEST;
             event.bossbar(prio,
-                          getMessage(MessageType.BOSS_BAR, shutdownTask.getSeconds()),
+                          text("Quick restart in " + formatSeconds(shutdownTask.getSeconds()), GREEN),
                           BossBar.Color.GREEN, BossBar.Overlay.NOTCHED_20, Set.of(),
                           (float) shutdownTask.getSeconds() / (float) shutdownTask.getTotalSeconds());
         }
     }
-
-    // --- Shutdown triggers
 
     protected boolean isShutdownActive() {
         return shutdownTask != null;
@@ -384,7 +380,6 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     protected void shutdownNow() {
         getLogger().info("Shutdown is imminent");
         this.shuttingDown = true;
-        Component msg = getMessage(MessageType.KICK);
         NetworkServer currentServer = NetworkServer.current();
         NetworkServer targetServer = currentServer != NetworkServer.HUB
             ? NetworkServer.HUB
@@ -400,7 +395,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         Bukkit.getScheduler().runTaskLater(this, () -> {
                 getLogger().info("Kicking all players");
                 for (Player player : getServer().getOnlinePlayers()) {
-                    player.kick(msg);
+                    player.kick(text("Quick restart", GREEN));
                 }
             }, 10L);
         if (shutdownTask != null) {
@@ -413,33 +408,19 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             }, 100L);
     }
 
-    // --- Messaging
-
     protected void broadcastShutdown(long seconds) {
-        getServer().broadcast(getMessage(MessageType.BROADCAST, seconds), "shutdown.notify");
+        getServer().broadcast(text("Quick restart in " + formatSeconds(seconds), GREEN), "shutdown.notify");
     }
 
     protected void titleShutdown(long seconds) {
-        Title title = Title.title(getMessage(MessageType.TITLE, seconds),
-                                  getMessage(MessageType.SUBTITLE, seconds));
+        Title title = Title.title(text("Quick restart", GREEN),
+                                  text("in " + formatSeconds(seconds), GREEN));
         for (Player player: getServer().getOnlinePlayers()) {
             if (player.hasPermission("shutdown.notify")) {
                 player.showTitle(title);
                 player.playSound(player.getLocation(), Sound.BLOCK_BELL_USE, SoundCategory.MASTER, 1.0f, 0.9f);
             }
         }
-    }
-
-    protected Component getMessage(MessageType type) {
-        String result = messages.get(type);
-        return result != null ? text(result) : empty();
-    }
-
-    protected Component getMessage(MessageType type, long seconds) {
-        String result = messages.get(type);
-        if (result == null) return empty();
-        result = result.replace("{time}", formatSeconds(seconds));
-        return text(result);
     }
 
     /**
