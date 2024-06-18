@@ -25,6 +25,7 @@ commands:
       /shutdown cancel - Cancel the currently ongoing shutdown
       /shutdown dump - Dump thread stack traces
       /shutdown whenempty - Shutdown next time the server is empty
+      /shutdown never - Hold all automatic shutdowns
 permissions:
   shutdown.shutdown:
     description: Use the /shutdown command

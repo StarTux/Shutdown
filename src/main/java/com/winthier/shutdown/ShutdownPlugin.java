@@ -70,6 +70,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     private Calendar calendar;
     private TimeOfDay lastTimeOfDay;
     private boolean whenEmpty;
+    private boolean never;
 
     // --- Setup routines
 
@@ -182,6 +183,11 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 sender.sendMessage(textOfChildren(text("Shutdown next time the server empties: ", YELLOW),
                                                   (whenEmpty ? text("Yes", GREEN) : text("No", RED))));
                 return true;
+            case "never":
+                never = !never;
+                sender.sendMessage(textOfChildren(text("Hold all automatic shutdowns: ", YELLOW),
+                                                  (whenEmpty ? text("Yes", GREEN) : text("No", RED))));
+                return true;
             default:
                 long seconds = 30;
                 try {
@@ -209,7 +215,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             String lower = args[0].toLowerCase();
-            return Stream.of("info", "reload", "reset", "cancel", "now", "dump", "whenempty")
+            return Stream.of("info", "reload", "reset", "cancel", "now", "dump", "whenempty", "never")
                 .filter(s -> s.contains(lower))
                 .toList();
         }
@@ -348,6 +354,9 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     }
 
     protected boolean shutdown(long seconds, ShutdownReason reason) {
+        if (never && reason != ShutdownReason.MANUAL) {
+            return false;
+        }
         if (timingsReport && uptime >= 60) {
             ShutdownTriggerEvent event = new ShutdownTriggerEvent(reason);
             event.callEvent();
