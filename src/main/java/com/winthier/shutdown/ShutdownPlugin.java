@@ -267,7 +267,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
         // Low Mem
         long free = freeMem();
         if (free < lowMemThreshold) {
-            getServer().broadcast(text("[Shutdown] cFree memory is at " + free + " MiB", RED), "shutdown.alert");
+            getServer().broadcast(text("[Shutdown] Free memory is at " + free + " MiB", RED), "shutdown.alert");
             lowMemTime += 1;
             if (maxLowMemTime >= 0 && lowMemTime > maxLowMemTime) {
                 shutdown(lowMemShutdownTime, ShutdownReason.LOWMEM);
