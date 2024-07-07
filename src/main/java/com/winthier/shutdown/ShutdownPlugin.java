@@ -188,7 +188,7 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
             case "never":
                 never = !never;
                 sender.sendMessage(textOfChildren(text("Hold all automatic shutdowns: ", YELLOW),
-                                                  (whenEmpty ? text("Yes", GREEN) : text("No", RED))));
+                                                  (never ? text("Yes", GREEN) : text("No", RED))));
                 return true;
             default:
                 long seconds = 30;
