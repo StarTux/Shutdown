@@ -30,6 +30,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.Component.textOfChildren;
@@ -184,6 +185,9 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
                 whenEmpty = !whenEmpty;
                 sender.sendMessage(textOfChildren(text("Shutdown next time the server empties: ", YELLOW),
                                                   (whenEmpty ? text("Yes", GREEN) : text("No", RED))));
+                if (whenEmpty && Bukkit.getOnlinePlayers().isEmpty()) {
+                    shutdown(0, ShutdownReason.EMPTY);
+                }
                 return true;
             case "never":
                 never = !never;
@@ -301,6 +305,17 @@ public final class ShutdownPlugin extends JavaPlugin implements Listener {
     @EventHandler
     protected void onPlayerJoin(PlayerJoinEvent event) {
         emptyTime = 0;
+    }
+
+    @EventHandler
+    protected void onPlayerQuit(PlayerQuitEvent event) {
+        if (whenEmpty) {
+            Bukkit.getScheduler().runTask(this, () -> {
+                    if (Bukkit.getOnlinePlayers().isEmpty()) {
+                        shutdown(0, ShutdownReason.EMPTY);
+                    }
+                });
+        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
